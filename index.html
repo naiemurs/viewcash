@@ -19,7 +19,7 @@
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useMemo } = React;
 
     // ফায়ারবেস কনফিগ
     const firebaseConfig = {
@@ -41,11 +41,10 @@
     // আইকনস
     const IconMenu = () => <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="14" y1="18" y2="18"/></svg>;
     const IconBell = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>;
-    
-    const IconMouse = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/><path d="M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/></svg>;
     const IconWallet = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>;
     const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>;
     const IconDashboard = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>;
+    const IconSparkles = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>;
     const IconHistory = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>;
     const IconCheck = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
     const IconAlert = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
@@ -61,10 +60,9 @@
       
       const [nameInput, setNameInput] = useState('');
 
-      const [userData, setUserData] = useState({ balance: 0, totalClicks: 0, viewedAds: [], name: '' });
+      const [userData, setUserData] = useState({ balance: 0, totalClicks: 0, viewedAds: [], name: '', lastActiveDate: '' });
       const [withdrawals, setWithdrawals] = useState([]);
       
-      // নতুন: প্রোফাইল ট্যাব যুক্ত করা হয়েছে
       const [activeTab, setActiveTab] = useState('dashboard');
       const [activeAd, setActiveAd] = useState(null);
       const [timeLeft, setTimeLeft] = useState(0);
@@ -74,13 +72,60 @@
       const [withdrawAmount, setWithdrawAmount] = useState('');
       const [isProcessing, setIsProcessing] = useState(false);
 
-      const allAds = [
-        { id: 'ad_1', title: 'Adsterra Direct Link 1', reward: 2.00, duration: 20, link: 'https://www.profitableratecpmnetwork.com/syp87vwp?key=f6f33d081102bce4009209a211ad25dc' },
-        { id: 'ad_2', title: 'Adsterra Direct Link 2', reward: 1.50, duration: 15, link: 'https://www.profitableratecpmnetwork.com/syp87vwp?key=f6f33d081102bce4009209a211ad25dc' },
-        { id: 'ad_3', title: 'Adsterra Premium Task', reward: 3.50, duration: 30, link: 'https://www.profitableratecpmnetwork.com/syp87vwp?key=f6f33d081102bce4009209a211ad25dc' },
-        { id: 'ad_4', title: 'Adsterra Bonus Task', reward: 1.00, duration: 10, link: 'https://www.profitableratecpmnetwork.com/syp87vwp?key=f6f33d081102bce4009209a211ad25dc' },
-      ];
+      // পেজিনেশন স্টেট
+      const [currentPage, setCurrentPage] = useState(1);
+      const adsPerPage = 20;
 
+      // ==========================================
+      // ১০০টি এডের লিস্ট (অটোমেটিক জেনারেট করা হয়েছে)
+      // ==========================================
+      const allAds = useMemo(() => {
+        const baseLinks = [
+          'https://www.profitableratecpmnetwork.com/syp87vwp?key=f6f33d081102bce4009209a211ad25dc',
+          'https://www.profitableratecpmnetwork.com/kmc8hs0gpx?key=c285956a7530e545063ceb9edb6c3450',
+          'https://www.profitableratecpmnetwork.com/emxxnjqh?key=d8cf807857cc2de69130b4d646029f37'
+        ];
+        
+        return Array.from({ length: 100 }, (_, i) => ({
+          id: `ad_${i + 1}`,
+          title: `Adsterra Task ${i + 1}`,
+          reward: 0.50, // ০.৫০ পয়সা
+          duration: 10 + (i % 3) * 5, // 10, 15, বা 20 সেকেন্ড
+          link: baseLinks[i % 3]
+        }));
+      }, []);
+
+      // বর্তমান পেজের এডগুলো ফিল্টার করা
+      const indexOfLastAd = currentPage * adsPerPage;
+      const indexOfFirstAd = indexOfLastAd - adsPerPage;
+      const currentAds = allAds.slice(indexOfFirstAd, indexOfLastAd);
+      const totalPages = Math.ceil(allAds.length / adsPerPage);
+
+      // ==========================================
+      // Popunder & Social Bar স্ক্রিপ্ট ইনজেক্ট করা
+      // ==========================================
+      useEffect(() => {
+        if (activeTab === 'special') {
+          // Social Bar
+          const script1 = document.createElement('script');
+          script1.src = 'https://pl20222540.profitableratecpmnetwork.com/c9/8c/2a/c98c2abec68f14d26f7d1e745adfc4dd.js';
+          script1.async = true;
+          document.body.appendChild(script1);
+
+          // Popunder
+          const script2 = document.createElement('script');
+          script2.src = 'https://pl20222562.profitableratecpmnetwork.com/6c/52/08/6c52083b957edcdc29a4d618ceb50330.js';
+          script2.async = true;
+          document.body.appendChild(script2);
+
+          return () => {
+            if (document.body.contains(script1)) document.body.removeChild(script1);
+            if (document.body.contains(script2)) document.body.removeChild(script2);
+          }
+        }
+      }, [activeTab]);
+
+      // ইউজার চেক
       useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((currentUser) => {
           setUser(currentUser);
@@ -89,12 +134,20 @@
         return () => unsubscribe();
       }, []);
 
+      // ডাটাবেস রিয়েল-টাইম ডাটা এবং প্রতিদিনের এড রিসেট
       useEffect(() => {
         if (!user) return;
-
         const unsubUser = db.collection('users').doc(user.uid).onSnapshot((docSnap) => {
+          const today = new Date().toLocaleDateString('en-US'); 
           if (docSnap.exists) {
-            setUserData(docSnap.data());
+            const data = docSnap.data();
+            if (data.lastActiveDate !== today) {
+               db.collection('users').doc(user.uid).set({
+                 viewedAds: [], lastActiveDate: today
+               }, { merge: true });
+            } else {
+               setUserData(data);
+            }
           }
         });
 
@@ -104,7 +157,6 @@
             data.sort((a, b) => b.timestamp - a.timestamp);
             setWithdrawals(data);
           });
-
         return () => { unsubUser(); unsubWithdrawals(); }
       }, [user]);
 
@@ -132,11 +184,9 @@
         setIsAuthProcessing(true);
         try {
           const result = await auth.signInAnonymously();
+          const today = new Date().toLocaleDateString('en-US');
           await db.collection('users').doc(result.user.uid).set({
-            name: nameInput,
-            balance: 0,
-            totalClicks: 0,
-            viewedAds: []
+            name: nameInput, balance: 0, totalClicks: 0, viewedAds: [], lastActiveDate: today
           }, { merge: true });
         } catch (error) {
           setAuthError('লগইন করতে সমস্যা হয়েছে।');
@@ -149,15 +199,10 @@
         try {
           await user.linkWithPopup(googleProvider);
           setMessage("অভিনন্দন! আপনার অ্যাকাউন্ট সফলভাবে ভেরিফাই হয়েছে।");
-          await db.collection('users').doc(user.uid).set({
-            email: auth.currentUser.email
-          }, { merge: true });
+          await db.collection('users').doc(user.uid).set({ email: auth.currentUser.email }, { merge: true });
         } catch (error) {
-          if (error.code === 'auth/credential-already-in-use') {
-             setMessage('এই জিমেইলটি অন্য অ্যাকাউন্টে ব্যবহৃত হচ্ছে।');
-          } else {
-             setMessage('ভেরিফিকেশন বাতিল হয়েছে।');
-          }
+          if (error.code === 'auth/credential-already-in-use') setMessage('এই জিমেইলটি অন্য অ্যাকাউন্টে ব্যবহৃত হচ্ছে।');
+          else setMessage('ভেরিফিকেশন বাতিল হয়েছে।');
         }
         setIsAuthProcessing(false);
       };
@@ -221,7 +266,7 @@
           <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
               <div className="inline-flex p-4 bg-indigo-600 rounded-full mb-4 shadow-lg text-yellow-400">
-                <IconMouse />
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11a3 3 0 1 0 6 0 3 3 0 0 0-6 0"/><path d="M17.657 16.657L13.414 20.9a2 2 0 0 1-2.827 0l-4.244-4.243a8 8 0 1 1 11.314 0z"/></svg>
               </div>
               <h2 className="text-3xl font-extrabold text-gray-900">Adsterra <span className="font-light text-indigo-600">Cash</span></h2>
               <p className="mt-2 text-sm text-gray-600">বিজ্ঞাপন দেখুন, প্রতিদিন আয় করুন</p>
@@ -251,46 +296,28 @@
 
       return (
         <div className="pb-10">
-          
-          {/* নতুন টপ নেভিগেশন (আপনার ছবির মতো ডিজাইন) */}
           <nav className="bg-[#0f172a] text-white pt-6 pb-5 px-4 shadow-lg sticky top-0 z-40">
             <div className="max-w-4xl mx-auto flex justify-between items-center">
-              
-              {/* বামপাশের অংশ: হ্যামবার্গার মেনু এবং নাম */}
               <div className="flex items-center gap-4">
-                <button className="text-white hover:text-gray-300 transition-colors">
-                  <IconMenu />
-                </button>
+                <button className="text-white hover:text-gray-300 transition-colors"><IconMenu /></button>
                 <div className="flex flex-col">
-                  <h1 className="text-xl md:text-2xl font-bold tracking-wide truncate w-40 sm:w-auto">
-                    Hi, {displayName}
-                  </h1>
+                  <h1 className="text-xl md:text-2xl font-bold tracking-wide truncate w-36 sm:w-auto">Hi, {displayName}</h1>
                   <p className="text-xs text-gray-400 font-medium tracking-wider">Explore the dashboard</p>
                 </div>
               </div>
-
-              {/* ডানপাশের অংশ: নোটিফিকেশন এবং প্রোফাইল ছবি */}
               <div className="flex items-center gap-5">
                 <div className="relative cursor-pointer text-gray-200 hover:text-white transition-colors">
                   <IconBell />
                   <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-yellow-400 border-2 border-[#0f172a] rounded-full"></span>
                 </div>
-                
-                {/* প্রোফাইল ছবিতে ক্লিক করলে "profile" ট্যাব ওপেন হবে */}
-                <button 
-                  onClick={() => setActiveTab('profile')} 
-                  className="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-white focus:border-white transition-all shadow-md focus:outline-none"
-                >
+                <button onClick={() => setActiveTab('profile')} className="w-12 h-12 rounded-full overflow-hidden border-2 border-transparent hover:border-white focus:border-white transition-all shadow-md focus:outline-none">
                   {user.photoURL ? (
                     <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold">
-                      {initialLetter}
-                    </div>
+                    <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white text-xl font-bold">{initialLetter}</div>
                   )}
                 </button>
               </div>
-
             </div>
           </nav>
 
@@ -301,29 +328,25 @@
               </div>
             )}
 
-            {/* মেইন ট্যাব মেনু */}
+            {/* ট্যাব মেনু (নতুন স্পেশাল এডস সহ) */}
             <div className="flex bg-white rounded-xl shadow-sm mb-6 p-1 border border-gray-100 overflow-x-auto">
-              <button onClick={() => setActiveTab('dashboard')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'dashboard' ? 'bg-[#0f172a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}><IconDashboard/> ড্যাশবোর্ড</button>
-              <button onClick={() => setActiveTab('ads')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'ads' ? 'bg-[#0f172a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}><IconPlay/> কাজ করুন</button>
-              <button onClick={() => setActiveTab('withdraw')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium text-sm whitespace-nowrap transition-colors ${activeTab === 'withdraw' ? 'bg-[#e2136e]/10 text-[#e2136e]' : 'text-gray-500 hover:bg-gray-50'}`}><IconWallet/> উইথড্র</button>
+              <button onClick={() => setActiveTab('dashboard')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${activeTab === 'dashboard' ? 'bg-[#0f172a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}><IconDashboard/> ড্যাশ</button>
+              <button onClick={() => setActiveTab('ads')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${activeTab === 'ads' ? 'bg-[#0f172a] text-white' : 'text-gray-500 hover:bg-gray-50'}`}><IconPlay/> কাজ</button>
+              
+              {/* স্পেশাল এডস ট্যাব */}
+              <button onClick={() => setActiveTab('special')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${activeTab === 'special' ? 'bg-purple-600 text-white' : 'text-purple-600 hover:bg-purple-50'}`}><IconSparkles/> স্পেশাল</button>
+              
+              <button onClick={() => setActiveTab('withdraw')} className={`flex-1 flex items-center justify-center gap-2 py-3 px-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap transition-colors ${activeTab === 'withdraw' ? 'bg-[#e2136e]/10 text-[#e2136e]' : 'text-gray-500 hover:bg-gray-50'}`}><IconWallet/> উইথড্র</button>
             </div>
 
-            {/* =========================================================
-                নতুন প্রোফাইল ট্যাব (যেটি ছবিতে ক্লিক করলে ওপেন হবে)
-                ========================================================= */}
+            {/* Profile Tab */}
             {activeTab === 'profile' && (
               <div className="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 animate-fade-in">
                 <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center border-b pb-4">আপনার প্রোফাইল</h2>
                 
                 <div className="flex flex-col items-center mb-8">
                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-indigo-50 shadow-md mb-4">
-                     {user.photoURL ? (
-                       <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" />
-                     ) : (
-                       <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white text-4xl font-bold">
-                         {initialLetter}
-                       </div>
-                     )}
+                     {user.photoURL ? <img src={user.photoURL} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-orange-500 flex items-center justify-center text-white text-4xl font-bold">{initialLetter}</div>}
                    </div>
                    <h3 className="text-xl font-bold text-gray-800">{displayName}</h3>
                    <p className="text-sm text-gray-500 mt-1">{user.email || 'ইমেইল অ্যাড করা নেই'}</p>
@@ -336,12 +359,7 @@
                         <h4 className="font-bold text-gray-800 mb-2">অ্যাকাউন্ট ভেরিফাই করুন</h4>
                         <p className="text-xs text-gray-600 mb-4">আপনার জমানো ব্যালেন্স সুরক্ষিত রাখতে এবং টাকা উইথড্র করতে গুগল অ্যাকাউন্ট লিঙ্ক করুন।</p>
                         <button onClick={handleGoogleLink} disabled={isAuthProcessing} className="w-full bg-white border border-gray-300 text-gray-700 font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors shadow-sm text-sm">
-                          {isAuthProcessing ? <IconLoader className="text-indigo-600"/> : (
-                            <>
-                              <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                              Google দিয়ে ভেরিফাই করুন
-                            </>
-                          )}
+                          {isAuthProcessing ? <IconLoader className="text-indigo-600"/> : 'Google দিয়ে ভেরিফাই করুন'}
                         </button>
                      </div>
                    ) : (
@@ -357,7 +375,7 @@
               </div>
             )}
 
-            {/* Dashboard Content */}
+            {/* Dashboard Tab */}
             {activeTab === 'dashboard' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-gradient-to-br from-indigo-500 to-indigo-700 p-6 rounded-2xl shadow-md text-white">
@@ -383,33 +401,77 @@
               </div>
             )}
 
-            {/* Ads Content */}
-            {activeTab === 'ads' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {allAds.map(ad => {
-                  const isViewed = (userData.viewedAds || []).includes(ad.id);
-                  return (
-                  <div key={ad.id} className={`bg-white p-5 rounded-xl border ${isViewed ? 'border-gray-200 opacity-60' : 'border-indigo-100 shadow-sm'}`}>
-                    <div className="flex justify-between mb-3">
-                      <h3 className="font-semibold text-gray-800">{ad.title}</h3>
-                      <span className="text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">৳ {ad.reward.toFixed(2)}</span>
-                    </div>
-                    <div className="text-gray-500 text-sm mb-4 flex items-center gap-1"><IconClock/> {ad.duration} সেকেন্ড অপেক্ষা</div>
-                    <button onClick={() => handleAdClick(ad)} disabled={isViewed || activeAd !== null} className={`w-full py-2.5 rounded-lg font-bold transition-colors ${isViewed ? 'bg-gray-100 text-gray-400' : activeAd !== null ? 'bg-indigo-300 text-white' : 'bg-[#0f172a] text-white hover:bg-indigo-900'}`}>
-                      {isViewed ? 'সম্পন্ন হয়েছে' : 'কাজ শুরু করুন'}
-                    </button>
-                  </div>
-                )})}
+            {/* Special Ads Tab (Popunder & Social Bar) */}
+            {activeTab === 'special' && (
+              <div className="bg-white p-6 md:p-10 rounded-2xl shadow-sm border border-gray-100 text-center animate-fade-in">
+                 <div className="inline-flex p-4 bg-purple-100 text-purple-600 rounded-full mb-4">
+                   <IconSparkles />
+                 </div>
+                 <h2 className="text-2xl font-bold text-gray-800 mb-2">স্পেশাল বিজ্ঞাপন</h2>
+                 <p className="text-gray-600 mb-6 text-sm max-w-md mx-auto">
+                   এই পেজে আপনার জন্য Popunder ও Social Bar বিজ্ঞাপনগুলো চালু করা হয়েছে। 
+                   <br/><br/>
+                   <strong className="text-purple-600">স্ক্রিনের যেকোনো জায়গায় ক্লিক করলেই Popunder এড ওপেন হবে এবং স্ক্রিনে Social Bar দেখতে পাবেন।</strong>
+                 </p>
+                 
+                 <div className="bg-purple-50 border border-purple-200 p-4 rounded-xl max-w-sm mx-auto">
+                   <p className="font-semibold text-purple-800 mb-2">বিজ্ঞাপনগুলো কি দেখতে পাচ্ছেন না?</p>
+                   <button onClick={() => window.location.reload()} className="bg-purple-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-purple-700 transition-colors w-full">
+                     পেজ রিলোড করুন
+                   </button>
+                 </div>
+                 <p className="text-xs text-gray-400 mt-6">বিঃদ্রঃ এই অপশনে একবার প্রবেশ করলে পেজ রিলোড না দেওয়া পর্যন্ত এডগুলো অ্যাক্টিভ থাকতে পারে।</p>
               </div>
             )}
 
-            {/* Withdraw Content */}
+            {/* Regular Ads Tab (100 Ads with Pagination) */}
+            {activeTab === 'ads' && (
+              <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold text-gray-800">আজকের কাজ ({currentPage}/{totalPages})</h2>
+                  <span className="text-sm bg-indigo-100 text-indigo-700 font-bold px-3 py-1 rounded-full">মোট এড: 100 টি</span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {currentAds.map(ad => {
+                    const isViewed = (userData.viewedAds || []).includes(ad.id);
+                    return (
+                    <div key={ad.id} className={`bg-white p-5 rounded-xl border ${isViewed ? 'border-gray-200 opacity-60' : 'border-indigo-100 shadow-sm'}`}>
+                      <div className="flex justify-between mb-3">
+                        <h3 className="font-semibold text-gray-800">{ad.title}</h3>
+                        <span className="text-sm font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full">৳ {ad.reward.toFixed(2)}</span>
+                      </div>
+                      <div className="text-gray-500 text-sm mb-4 flex items-center gap-1"><IconClock/> {ad.duration} সেকেন্ড অপেক্ষা</div>
+                      <button onClick={() => handleAdClick(ad)} disabled={isViewed || activeAd !== null} className={`w-full py-2.5 rounded-lg font-bold transition-colors ${isViewed ? 'bg-gray-100 text-gray-400' : activeAd !== null ? 'bg-indigo-300 text-white' : 'bg-[#0f172a] text-white hover:bg-indigo-900'}`}>
+                        {isViewed ? 'সম্পন্ন হয়েছে' : 'কাজ শুরু করুন'}
+                      </button>
+                    </div>
+                  )})}
+                </div>
+
+                {/* Pagination Controls */}
+                <div className="flex justify-center flex-wrap gap-2 mt-8">
+                  {Array.from({length: totalPages}, (_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        setCurrentPage(i + 1);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className={`w-10 h-10 flex items-center justify-center rounded-lg font-bold transition-colors shadow-sm ${currentPage === i + 1 ? 'bg-[#0f172a] text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Withdraw Tab */}
             {activeTab === 'withdraw' && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                
                 <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 relative overflow-hidden">
                   <h2 className="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2"><span className="text-[#e2136e]"><IconWallet/></span> বিকাশে পেমেন্ট নিন</h2>
-                  
                   {isAnonymous ? (
                     <div className="bg-yellow-50 p-6 rounded-xl border border-yellow-200 text-center mt-4">
                       <div className="inline-flex p-3 bg-yellow-100 text-yellow-600 rounded-full mb-3"><IconAlert /></div>
@@ -435,7 +497,6 @@
                     </form>
                   )}
                 </div>
-
                 <div className="lg:col-span-1 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                   <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><span className="text-gray-500"><IconHistory/></span> হিস্ট্রি</h3>
                   {withdrawals.length === 0 ? <p className="text-sm text-gray-400">কোনো হিস্ট্রি নেই</p> : (
@@ -453,7 +514,7 @@
             )}
           </main>
 
-          {/* Ad Modal (Timer) */}
+          {/* Ad Timer Modal */}
           {activeAd && (
             <div className="fixed inset-0 bg-gray-900/95 flex flex-col z-50">
               <div className="bg-[#0f172a] text-white p-3 flex justify-between items-center shadow-md">
@@ -470,7 +531,6 @@
                      নতুন ট্যাবে ওপেন হওয়া বিজ্ঞাপনটি দয়া করে ভিজিট করুন। এই পেজটি বন্ধ করবেন না, টাইমার শেষ হলে আপনার অ্যাকাউন্টে টাকা যোগ হবে।
                    </p>
                  </div>
-                 
                  <div className="w-32 h-32 rounded-full border-4 border-indigo-500 flex flex-col items-center justify-center bg-gray-800 shadow-[0_0_15px_rgba(99,102,241,0.5)] relative">
                     <span className="text-4xl font-bold text-white">{timeLeft}</span>
                     <span className="text-xs text-indigo-300 font-medium">সেকেন্ড</span>
